@@ -25,7 +25,7 @@ const bookCache = new Map<string, Promise<string[][]>>();
 /** Loads a whole book of the Douay-Rheims (served locally; precached for offline use). */
 export function loadBook(slug: string): Promise<string[][]> {
   if (!bookCache.has(slug)) {
-    const p = fetch(`/bible/${slug}.json`)
+    const p = fetch(`${import.meta.env.BASE_URL}bible/${slug}.json`)
       .then((r) => {
         if (!r.ok) throw new Error(`Could not load ${slug}`);
         return r.json();

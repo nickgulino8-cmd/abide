@@ -4,7 +4,11 @@ import tailwindcss from '@tailwindcss/vite';
 import { VitePWA } from 'vite-plugin-pwa';
 import { fileURLToPath, URL } from 'node:url';
 
+// BASE_PATH lets the app live in a subfolder, e.g. GitHub Pages: BASE_PATH=/abide/
+const base = process.env.BASE_PATH || '/';
+
 export default defineConfig({
+  base,
   resolve: { alias: { '@': fileURLToPath(new URL('./src', import.meta.url)) } },
   build: { chunkSizeWarningLimit: 800 },
   plugins: [
@@ -22,8 +26,8 @@ export default defineConfig({
         background_color: '#f7f2e8',
         display: 'standalone',
         orientation: 'portrait',
-        start_url: '/',
-        scope: '/',
+        start_url: base,
+        scope: base,
         categories: ['lifestyle', 'health', 'books'],
         icons: [
           { src: 'pwa-192.png', sizes: '192x192', type: 'image/png' },
@@ -35,9 +39,9 @@ export default defineConfig({
         // Precache the entire app, including the full offline Douay-Rheims Bible.
         globPatterns: ['**/*.{js,css,html,svg,png,woff2,json}'],
         maximumFileSizeToCacheInBytes: 3 * 1024 * 1024,
-        navigateFallback: '/index.html',
+        navigateFallback: `${base}index.html`,
         cleanupOutdatedCaches: true,
-        importScripts: ['/sw-notify.js'],
+        importScripts: [`${base}sw-notify.js`],
       },
     }),
   ],

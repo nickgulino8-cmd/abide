@@ -81,13 +81,13 @@ Abide then opens full-screen like a native app and works offline.
 
 ### Free hosting
 
-`dist/` is static, so any of these free tiers works:
+**Option A: GitHub Pages (easiest; no extra account).** The included workflow `.github/workflows/deploy.yml` tests, builds and publishes the app on every push to `main`. One-time setup: in the repository go to **Settings → Pages → Build and deployment → Source: GitHub Actions**. The app goes live at `https://<your-username>.github.io/<repository-name>/`. The build sets `BASE_PATH` automatically so the app works in that subfolder.
 
-- **Cloudflare Pages / Netlify:** build command `npm run build`, output `dist`. `public/_redirects` handles routing.
-- **Vercel:** `vercel.json` is included.
-- **GitHub Pages:** works, but Pages doesn't support SPA rewrites. Copy `dist/index.html` to `dist/404.html` before publishing.
+**Option B: Netlify or Cloudflare Pages.** Import the GitHub repository. On Netlify, `netlify.toml` supplies every setting. On Cloudflare Pages, use build command `npm run build` and output `dist`, and set the environment variable `NODE_VERSION=22`. `public/_redirects` handles routing.
 
-Free-tier limits (bandwidth and build minutes) are far above what a personal app uses. No database, functions, or paid add-ons are required.
+**Option C: Vercel.** `vercel.json` is included.
+
+Free-tier limits (bandwidth and build minutes) are far above what a personal app uses. No database, server functions or paid add-ons are needed.
 
 ## Honest limitations
 

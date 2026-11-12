@@ -7,6 +7,8 @@ import type { Reminders, ReminderSetting } from './store';
 import { useStore } from './store';
 import { dateKey } from './dates';
 
+const BASE = import.meta.env.BASE_URL;
+
 export type ReminderKey = 'morning' | 'afternoon' | 'evening' | 'checkin' | 'prayer';
 
 export const REMINDER_COPY: Record<ReminderKey, { label: string; title: string; body: string; url: string }> = {
@@ -32,7 +34,7 @@ export async function requestPermission(): Promise<NotificationPermission | 'uns
 export async function showNotification(key: ReminderKey) {
   const c = REMINDER_COPY[key];
   if (!notificationsSupported() || Notification.permission !== 'granted') return false;
-  const opts: NotificationOptions = { body: c.body, icon: '/pwa-192.png', badge: '/pwa-192.png', tag: `abide-${key}`, data: { url: c.url } };
+  const opts: NotificationOptions = { body: c.body, icon: `${BASE}pwa-192.png`, badge: `${BASE}pwa-192.png`, tag: `abide-${key}`, data: { url: BASE + c.url.slice(1) } };
   try {
     const reg = await navigator.serviceWorker?.getRegistration();
     if (reg) await reg.showNotification(c.title, opts);
@@ -80,7 +82,7 @@ export function startReminderLoop(): () => void {
 }
 
 /** Builds an .ics calendar with a daily repeating event + alarm for each enabled reminder. */
-export function buildICS(reminders: Reminders, origin = location.origin): string {
+export function buildICS(reminders: Reminders, origin = location.origin + BASE.replace(/\/$/, '')): string {
   const stamp = new Date().toISOString().replace(/[-:]/g, '').replace(/\.\d+Z$/, 'Z');
   const start = dateKey().replace(/-/g, '');
   const esc = (s: string) => s.replace(/[,;\\]/g, (m) => '\\' + m);

@@ -28,7 +28,7 @@ const step = async (name, fn) => {
 const click = (text) => page.getByRole('button', { name: text, exact: false }).first().click();
 
 await step('onboarding', async () => {
-  await page.goto(BASE, { waitUntil: 'networkidle' });
+  await page.goto(`${BASE}/`, { waitUntil: 'networkidle' });
   await page.getByText('Welcome to Abide.').waitFor();
   await shot('01-welcome');
   await click('Begin');
@@ -188,7 +188,7 @@ await step('data persists after reload', async () => {
 });
 
 await step('works offline', async () => {
-  await page.goto(BASE, { waitUntil: 'networkidle' });
+  await page.goto(`${BASE}/`, { waitUntil: 'networkidle' });
   await page.waitForFunction(() => navigator.serviceWorker?.controller != null, null, { timeout: 15000 }).catch(async () => {
     await page.reload({ waitUntil: 'networkidle' });
   });
@@ -204,7 +204,7 @@ await step('works offline', async () => {
 
 await step('dark mode', async () => {
   await page.emulateMedia({ colorScheme: 'dark' });
-  await page.goto(BASE, { waitUntil: 'networkidle' });
+  await page.goto(`${BASE}/`, { waitUntil: 'networkidle' });
   await page.waitForTimeout(1000);
   await shot('20-home-dark');
 });

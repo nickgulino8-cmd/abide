@@ -328,7 +328,7 @@ function Privacy() {
             } catch {
               /* ignore */
             }
-            location.href = '/';
+            location.href = import.meta.env.BASE_URL;
           }}
         >
           Permanently delete
