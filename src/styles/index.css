@@ -1,0 +1,207 @@
+@import 'tailwindcss';
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* ─────────────── Design tokens ─────────────── */
+:root {
+  --bg: #f7f2e8; /* warm ivory */
+  --bg-2: #efe7d7;
+  --surface: #fffcf5; /* cream */
+  --surface-2: #f3ecdd;
+  --ink: #1d2a23;
+  --ink-soft: #56625b;
+  --ink-faint: #8a928c;
+  --forest: #1f3d2f;
+  --forest-2: #2e5641;
+  --sage: #8fa88f;
+  --sage-soft: #dfe7d8;
+  --gold: #b88a35;
+  --gold-bright: #d9b15e;
+  --gold-soft: #f1e4c4;
+  --rose: #b4735c;
+  --line: rgba(31, 61, 47, 0.1);
+  --line-strong: rgba(31, 61, 47, 0.18);
+  --shadow: 0 1px 2px rgba(31, 45, 35, 0.04), 0 8px 24px -12px rgba(31, 45, 35, 0.18);
+  --shadow-lg: 0 2px 6px rgba(31, 45, 35, 0.05), 0 22px 48px -24px rgba(31, 45, 35, 0.35);
+  --hero-from: #f4ecdb;
+  --hero-to: #e3ead9;
+  --on-forest: #f7f2e8;
+  color-scheme: light;
+}
+
+.dark {
+  --bg: #121614; /* deep charcoal */
+  --bg-2: #171c19;
+  --surface: #1a201c;
+  --surface-2: #222a25;
+  --ink: #ece7db;
+  --ink-soft: #a9b1aa;
+  --ink-faint: #737d76;
+  --forest: #a9cdb1;
+  --forest-2: #8bb898;
+  --sage: #6f8a72;
+  --sage-soft: #26322b;
+  --gold: #d9b15e;
+  --gold-bright: #e8c67a;
+  --gold-soft: #3a3222;
+  --rose: #d39a83;
+  --line: rgba(236, 231, 219, 0.08);
+  --line-strong: rgba(236, 231, 219, 0.16);
+  --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 10px 26px -14px rgba(0, 0, 0, 0.6);
+  --shadow-lg: 0 2px 6px rgba(0, 0, 0, 0.3), 0 24px 50px -24px rgba(0, 0, 0, 0.8);
+  --hero-from: #1b2420;
+  --hero-to: #141a17;
+  --on-forest: #10241a;
+  color-scheme: dark;
+}
+
+@theme {
+  --color-bg: var(--bg);
+  --color-bg-2: var(--bg-2);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-ink: var(--ink);
+  --color-ink-soft: var(--ink-soft);
+  --color-ink-faint: var(--ink-faint);
+  --color-forest: var(--forest);
+  --color-forest-2: var(--forest-2);
+  --color-sage: var(--sage);
+  --color-sage-soft: var(--sage-soft);
+  --color-gold: var(--gold);
+  --color-gold-bright: var(--gold-bright);
+  --color-gold-soft: var(--gold-soft);
+  --color-rose: var(--rose);
+  --color-line: var(--line);
+  --color-line-strong: var(--line-strong);
+  --color-on-forest: var(--on-forest);
+  --font-serif: 'Cormorant Garamond', 'Iowan Old Style', 'Palatino Linotype', Georgia, serif;
+  --font-sans: 'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --shadow-soft: var(--shadow);
+  --shadow-lift: var(--shadow-lg);
+  --radius-4xl: 2rem;
+}
+
+/* ─────────────── Base ─────────────── */
+html {
+  -webkit-text-size-adjust: 100%;
+  -webkit-tap-highlight-color: transparent;
+}
+html,
+body {
+  background: var(--bg);
+  color: var(--ink);
+}
+body {
+  font-family: var(--font-sans);
+  font-size: calc(16px * var(--text-scale, 1));
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+  min-height: 100dvh;
+  overscroll-behavior-y: none;
+}
+::selection {
+  background: var(--gold-soft);
+}
+button {
+  cursor: pointer;
+}
+:focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: 2px;
+  border-radius: 8px;
+}
+input,
+textarea,
+select {
+  font: inherit;
+  color: inherit;
+}
+
+/* ─────────────── Components ─────────────── */
+@utility card {
+  @apply rounded-[1.75rem] border border-line bg-surface shadow-soft;
+}
+@utility card-pad {
+  @apply p-5;
+}
+@utility eyebrow {
+  @apply text-[0.7rem] font-semibold uppercase tracking-[0.16em] text-ink-faint;
+}
+@utility serif {
+  font-family: var(--font-serif);
+}
+@utility display {
+  font-family: var(--font-serif);
+  font-variant-numeric: lining-nums;
+  font-feature-settings: 'lnum' 1;
+  @apply font-medium tracking-[-0.01em];
+}
+@utility btn {
+  @apply inline-flex items-center justify-center gap-2 rounded-full px-5 py-3 text-[0.95rem] font-medium transition active:scale-[0.98] disabled:opacity-50 disabled:active:scale-100;
+}
+@utility btn-primary {
+  @apply btn bg-forest text-on-forest shadow-soft hover:brightness-110;
+}
+@utility btn-gold {
+  @apply btn text-[#2a2112] shadow-soft hover:brightness-105;
+  background: linear-gradient(135deg, #e7c67f, #c99a45);
+}
+@utility btn-ghost {
+  @apply btn border border-line-strong bg-transparent text-ink hover:bg-surface-2;
+}
+@utility btn-soft {
+  @apply btn bg-surface-2 text-ink hover:brightness-[0.98];
+}
+@utility chip {
+  @apply inline-flex items-center gap-1.5 rounded-full border border-line bg-surface px-3 py-1.5 text-sm text-ink-soft transition;
+}
+@utility chip-active {
+  @apply border-forest bg-forest text-on-forest;
+}
+@utility field {
+  @apply w-full rounded-2xl border border-line-strong bg-surface px-4 py-3 text-ink outline-none transition placeholder:text-ink-faint focus:border-gold;
+}
+@utility scripture {
+  font-family: var(--font-serif);
+  @apply text-[1.3rem] leading-[1.6] text-ink;
+}
+@utility verse-num {
+  @apply mr-1 align-super font-sans text-[0.6rem] font-semibold text-gold;
+}
+@utility hero-gradient {
+  background:
+    radial-gradient(120% 80% at 50% 0%, var(--hero-from), transparent 70%),
+    linear-gradient(180deg, var(--hero-from), var(--hero-to));
+}
+@utility gold-text {
+  background: linear-gradient(135deg, #e3c27a, #b8862f);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+@utility row-link {
+  @apply flex w-full items-center gap-4 rounded-2xl px-1 py-3 text-left transition active:bg-surface-2;
+}
+
+@utility no-scrollbar {
+  scrollbar-width: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+.pb-safe {
+  padding-bottom: max(env(safe-area-inset-bottom), 0px);
+}
+.pt-safe {
+  padding-top: env(safe-area-inset-top);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
