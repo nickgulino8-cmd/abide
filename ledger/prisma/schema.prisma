@@ -1,0 +1,262 @@
+// Ledger database schema.
+// All money is stored as INTEGER CENTS (e.g. $12.34 -> 1234) to avoid
+// floating-point rounding errors. Positive = money out, negative = money in
+// (this matches Plaid's sign convention).
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  // SQLite for local development. To move to Postgres later, change this to
+  // "postgresql" and point DATABASE_URL at your Postgres database.
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// ---------- App / security ----------
+
+model AppSettings {
+  id               Int       @id @default(1)
+  pinHash          String?   // scrypt hash of your PIN, never the PIN itself
+  failedAttempts   Int       @default(0)
+  lockedUntil      DateTime?
+  idleLockMinutes  Int       @default(5)
+  sessionVersion   Int       @default(1) // bump to log out every device
+  theme            String    @default("system") // system | light | dark
+  budgetTemplate   String?   // fifty_thirty_twenty | zero_based | custom
+  lowBalanceCents  Int       @default(10000)
+  largeTxnCents    Int       @default(20000)
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+}
+
+// ---------- Banks (Plaid) ----------
+
+model PlaidItem {
+  id               String        @id @default(cuid())
+  itemId           String        @unique
+  accessTokenEnc   String        // AES-256-GCM encrypted access token
+  institutionId    String?
+  institutionName  String?
+  cursor           String?       // /transactions/sync cursor
+  lastSyncedAt     DateTime?
+  status           String        @default("ok") // ok | login_required | error
+  createdAt        DateTime      @default(now())
+  accounts         Account[]
+}
+
+model Account {
+  id                 String        @id @default(cuid())
+  plaidAccountId     String?       @unique
+  itemId             String?
+  item               PlaidItem?    @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  name               String
+  officialName       String?
+  mask               String?
+  type               String        // depository | credit | loan | investment | cash
+  subtype            String?       // checking | savings | credit card | ...
+  currentCents       Int?
+  availableCents     Int?
+  limitCents         Int?
+  currency           String        @default("USD")
+  hidden             Boolean       @default(false)
+  isManual           Boolean       @default(false) // e.g. the "Cash" wallet
+  createdAt          DateTime      @default(now())
+  updatedAt          DateTime      @updatedAt
+  transactions       Transaction[]
+}
+
+model Transaction {
+  id                   String             @id @default(cuid())
+  plaidTransactionId   String?            @unique
+  pendingTransactionId String?            // links a posted txn to its pending version
+  accountId            String
+  account              Account            @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  amountCents          Int                // + spending, - income/refund
+  date                 DateTime
+  authorizedDate       DateTime?
+  rawName              String             // what the bank sent: "SQ *JOES COFFEE 4412"
+  merchantName         String?            // cleaned: "Joe's Coffee"
+  plaidCategory        String?            // Plaid personal_finance_category.detailed
+  plaidConfidence      String?
+  categoryId           String?
+  category             Category?          @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  pending              Boolean            @default(false)
+  isTransfer           Boolean            @default(false) // between your own accounts: not spending
+  isManual             Boolean            @default(false)
+  needsReview          Boolean            @default(true)
+  notes                String?
+  createdAt            DateTime           @default(now())
+  updatedAt            DateTime           @updatedAt
+  splits               TransactionSplit[]
+  tags                 TransactionTag[]
+
+  @@index([date])
+  @@index([categoryId])
+  @@index([accountId])
+}
+
+model TransactionSplit {
+  id            String      @id @default(cuid())
+  transactionId String
+  transaction   Transaction @relation(fields: [transactionId], references: [id], onDelete: Cascade)
+  categoryId    String
+  category      Category    @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  amountCents   Int
+  note          String?
+}
+
+model Tag {
+  id           String           @id @default(cuid())
+  name         String           @unique // stored without the "#"
+  transactions TransactionTag[]
+}
+
+model TransactionTag {
+  transactionId String
+  tagId         String
+  transaction   Transaction @relation(fields: [transactionId], references: [id], onDelete: Cascade)
+  tag           Tag         @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([transactionId, tagId])
+}
+
+// ---------- Categories & rules ----------
+
+// Two levels: a group (parentId = null) and its subcategories.
+model Category {
+  id           String             @id @default(cuid())
+  name         String
+  icon         String?
+  color        String?
+  parentId     String?
+  parent       Category?          @relation("CategoryTree", fields: [parentId], references: [id], onDelete: Cascade)
+  children     Category[]         @relation("CategoryTree")
+  kind         String             @default("expense") // expense | income | transfer | uncategorized
+  bucket       String?            // need | want | savings (for 50/30/20)
+  hidden       Boolean            @default(false)
+  sortOrder    Int                @default(0)
+  createdAt    DateTime           @default(now())
+  transactions Transaction[]
+  splits       TransactionSplit[]
+  rules        Rule[]
+  budgets      Budget[]
+
+  @@unique([parentId, name])
+}
+
+model Rule {
+  id          String   @id @default(cuid())
+  matchField  String   @default("merchant") // merchant | raw
+  matchType   String   @default("equals")   // equals | contains
+  pattern     String                        // compared case-insensitively
+  categoryId  String
+  category    Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  priority    Int      @default(0)
+  createdAt   DateTime @default(now())
+}
+
+model MerchantAlias {
+  id        String @id @default(cuid())
+  pattern   String @unique // cleaned raw name, uppercase
+  name      String         // what you want to see
+}
+
+// ---------- Budgets ----------
+
+model Budget {
+  id          String   @id @default(cuid())
+  categoryId  String
+  category    Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  month       String   // "YYYY-MM"
+  amountCents Int
+  rollover    Boolean  @default(false)
+
+  @@unique([categoryId, month])
+}
+
+// ---------- Income (shifts & tips) ----------
+
+model Shift {
+  id             String   @id @default(cuid())
+  date           DateTime
+  hours          Float
+  hourlyWageCents Int     @default(0) // base wage per hour
+  cashTipsCents  Int      @default(0)
+  cardTipsCents  Int      @default(0)
+  shiftType      String?  // lunch | dinner | double | brunch
+  notes          String?
+  createdAt      DateTime @default(now())
+
+  @@index([date])
+}
+
+// ---------- Goals ----------
+
+model Goal {
+  id            String             @id @default(cuid())
+  name          String
+  emoji         String?
+  targetCents   Int
+  deadline      DateTime?
+  archived      Boolean            @default(false)
+  createdAt     DateTime           @default(now())
+  contributions GoalContribution[]
+}
+
+model GoalContribution {
+  id          String   @id @default(cuid())
+  goalId      String
+  goal        Goal     @relation(fields: [goalId], references: [id], onDelete: Cascade)
+  amountCents Int
+  date        DateTime @default(now())
+  note        String?
+}
+
+// ---------- Recurring charges ----------
+
+model RecurringCharge {
+  id             String    @id @default(cuid())
+  merchantKey    String    @unique
+  merchantName   String
+  frequency      String    // weekly | monthly | yearly
+  amountCents    Int       // most recent amount
+  prevAmountCents Int?
+  lastDate       DateTime
+  nextDate       DateTime?
+  categoryId     String?
+  dismissed      Boolean   @default(false)
+  markedUnused   Boolean   @default(false)
+  updatedAt      DateTime  @updatedAt
+}
+
+// ---------- Investing ----------
+
+model InvestSettings {
+  id                   Int      @id @default(1)
+  fundSymbol           String   @default("VTI")
+  currentBalanceCents  Int      @default(0)
+  emergencyMonths      Int      @default(3)
+  riskLevel            String   @default("moderate") // cautious | moderate | aggressive
+  watchlist            String   @default("SPY,QQQ,DIA,IWM,VTI")
+  updatedAt            DateTime @updatedAt
+}
+
+// ---------- Notifications ----------
+
+model PushSubscription {
+  id        String   @id @default(cuid())
+  endpoint  String   @unique
+  p256dh    String
+  auth      String
+  createdAt DateTime @default(now())
+}
+
+model AlertLog {
+  id        String   @id @default(cuid())
+  key       String   @unique // dedupe key, e.g. "budget80:catId:2026-11"
+  title     String
+  body      String
+  createdAt DateTime @default(now())
+}

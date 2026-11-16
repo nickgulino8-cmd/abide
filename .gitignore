@@ -5,3 +5,9 @@ dist
 dev-dist
 scripts/.cache
 downloads/
+# Ledger: secrets and local databases must never be committed
+.env
+.env.*
+!.env.example
+*.db
+*.db-journal

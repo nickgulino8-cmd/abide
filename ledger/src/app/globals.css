@@ -1,0 +1,59 @@
+@import "tailwindcss";
+
+/* Dark mode follows the "dark" class on <html> (set from your setting). */
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --color-bg: var(--bg);
+  --color-card: var(--card);
+  --color-ink: var(--ink);
+  --color-muted: var(--muted);
+  --color-line: var(--line);
+  --color-accent: var(--accent);
+  --color-accent-soft: var(--accent-soft);
+  --color-good: var(--good);
+  --color-warn: var(--warn);
+  --color-bad: var(--bad);
+}
+
+:root {
+  --bg: #f4f4f5;
+  --card: #ffffff;
+  --ink: #18181b;
+  --muted: #71717a;
+  --line: #e4e4e7;
+  --accent: #059669;
+  --accent-soft: #d1fae5;
+  --good: #16a34a;
+  --warn: #ca8a04;
+  --bad: #dc2626;
+  color-scheme: light;
+}
+
+.dark {
+  --bg: #09090b;
+  --card: #18181b;
+  --ink: #fafafa;
+  --muted: #a1a1aa;
+  --line: #27272a;
+  --accent: #34d399;
+  --accent-soft: #064e3b;
+  --good: #4ade80;
+  --warn: #facc15;
+  --bad: #f87171;
+  color-scheme: dark;
+}
+
+html, body {
+  background: var(--bg);
+  color: var(--ink);
+  -webkit-tap-highlight-color: transparent;
+  overscroll-behavior-y: none;
+}
+
+/* iPhone notch / home-indicator safe areas */
+.pt-safe { padding-top: max(env(safe-area-inset-top), 0.75rem); }
+.pb-safe { padding-bottom: max(env(safe-area-inset-bottom), 0.5rem); }
+
+.tabular { font-variant-numeric: tabular-nums; }
